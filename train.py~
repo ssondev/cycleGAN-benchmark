@@ -148,15 +148,16 @@ for epoch in range(opt.epoch, opt.n_epochs):
             report_gpu_memory()
 
             loss_G.backward()
-            torch.cuda.synchronize()    
-            optimizer_G.step()
+        torch.cuda.synchronize()    
+        optimizer_G.step()
         ###################################
-            print("Generator backward done")
-            report_gpu_memory()
+        print("Generator backward done")
+        report_gpu_memory()
 
 
-            torch.cuda.synchronize()    
+        torch.cuda.synchronize()    
         ###### Discriminator A ######
+        with torch.cuda.stream(s):
             optimizer_D_A.zero_grad()
 
             # Real loss
@@ -176,13 +177,14 @@ for epoch in range(opt.epoch, opt.n_epochs):
             loss_D_A.backward()
 
         
-            torch.cuda.synchronize()    
-            optimizer_D_A.step()
+        torch.cuda.synchronize()    
+        optimizer_D_A.step()
         ###################################
-            print("Discriminator A backward done")
-            report_gpu_memory() 
+        print("Discriminator A backward done")
+        report_gpu_memory() 
         ###### Discriminator B ######
-            torch.cuda.synchronize()    
+        torch.cuda.synchronize()    
+        with torch.cuda.stream(s):    
             optimizer_D_B.zero_grad()
 
             # Real loss
@@ -200,11 +202,11 @@ for epoch in range(opt.epoch, opt.n_epochs):
             report_gpu_memory() 
 
             loss_D_B.backward()
-            torch.cuda.synchronize()
-            optimizer_D_B.step()
+        torch.cuda.synchronize()
+        optimizer_D_B.step()
         ###################################
-            print("Discriminator B backward done")
-            report_gpu_memory() 
+        print("Discriminator B backward done")
+        report_gpu_memory() 
 
         elapsed_time = time.time() - start_time
         print("Iteration time: " + str(elapsed_time))

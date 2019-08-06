@@ -113,98 +113,97 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
         
         torch.cuda.synchronize()
-        with torch.cuda.stream(s):    
-            ###### Generators A2B and B2A ######
-            optimizer_G.zero_grad()
+        ###### Generators A2B and B2A ######
+        optimizer_G.zero_grad()
 
-            # Identity loss
-            # G_A2B(B) should equal B if real B is fed
-            same_B = netG_A2B(real_B)
-            loss_identity_B = criterion_identity(same_B, real_B)*5.0
-            # G_B2A(A) should equal A if real A is fed
-            same_A = netG_B2A(real_A)
-            loss_identity_A = criterion_identity(same_A, real_A)*5.0
+        # Identity loss
+        # G_A2B(B) should equal B if real B is fed
+        same_B = netG_A2B(real_B)
+        loss_identity_B = criterion_identity(same_B, real_B)*5.0
+        # G_B2A(A) should equal A if real A is fed
+        same_A = netG_B2A(real_A)
+        loss_identity_A = criterion_identity(same_A, real_A)*5.0
 
-            # GAN loss
-            fake_B = netG_A2B(real_A)
-            pred_fake = netD_B(fake_B)
-            loss_GAN_A2B = criterion_GAN(pred_fake, target_real)
+        # GAN loss
+        fake_B = netG_A2B(real_A)
+        pred_fake = netD_B(fake_B)
+        loss_GAN_A2B = criterion_GAN(pred_fake, target_real)
 
-            fake_A = netG_B2A(real_B)
-            pred_fake = netD_A(fake_A)
-            loss_GAN_B2A = criterion_GAN(pred_fake, target_real)
+        fake_A = netG_B2A(real_B)
+        pred_fake = netD_A(fake_A)
+        loss_GAN_B2A = criterion_GAN(pred_fake, target_real)
 
-            # Cycle loss
-            recovered_A = netG_B2A(fake_B)
-            loss_cycle_ABA = criterion_cycle(recovered_A, real_A)*10.0
+        # Cycle loss
+        recovered_A = netG_B2A(fake_B)
+        loss_cycle_ABA = criterion_cycle(recovered_A, real_A)*10.0
 
-            recovered_B = netG_A2B(fake_A)
-            loss_cycle_BAB = criterion_cycle(recovered_B, real_B)*10.0
+        recovered_B = netG_A2B(fake_A)
+        loss_cycle_BAB = criterion_cycle(recovered_B, real_B)*10.0
 
-            # Total loss
-            loss_G = loss_identity_A + loss_identity_B + loss_GAN_A2B + loss_GAN_B2A + loss_cycle_ABA + loss_cycle_BAB
-            
-            print("Generator forward done")
-            report_gpu_memory()
-
-            loss_G.backward()
-            torch.cuda.synchronize()    
-            optimizer_G.step()
-        ###################################
-            print("Generator backward done")
-            report_gpu_memory()
-
-
-            torch.cuda.synchronize()    
-        ###### Discriminator A ######
-            optimizer_D_A.zero_grad()
-
-            # Real loss
-            pred_real = netD_A(real_A)
-            loss_D_real = criterion_GAN(pred_real, target_real)
-
-            # Fake loss
-            fake_A = fake_A_buffer.push_and_pop(fake_A)
-            pred_fake = netD_A(fake_A.detach())
-            loss_D_fake = criterion_GAN(pred_fake, target_fake)
-
-            # Total loss
-            loss_D_A = (loss_D_real + loss_D_fake)*0.5
-            print("Discriminator A forward done")
-            report_gpu_memory() 
-            
-            loss_D_A.backward()
-
+        # Total loss
+        loss_G = loss_identity_A + loss_identity_B + loss_GAN_A2B + loss_GAN_B2A + loss_cycle_ABA + loss_cycle_BAB
         
-            torch.cuda.synchronize()    
-            optimizer_D_A.step()
-        ###################################
-            print("Discriminator A backward done")
-            report_gpu_memory() 
-        ###### Discriminator B ######
-            torch.cuda.synchronize()    
-            optimizer_D_B.zero_grad()
+        print("Generator forward done")
+        report_gpu_memory()
 
-            # Real loss
-            pred_real = netD_B(real_B)
-            loss_D_real = criterion_GAN(pred_real, target_real)
-            
-            # Fake loss
-            fake_B = fake_B_buffer.push_and_pop(fake_B)
-            pred_fake = netD_B(fake_B.detach())
-            loss_D_fake = criterion_GAN(pred_fake, target_fake)
+        loss_G.backward()
+        torch.cuda.synchronize()    
+        optimizer_G.step()
+    ###################################
+        print("Generator backward done")
+        report_gpu_memory()
 
-            # Total loss
-            loss_D_B = (loss_D_real + loss_D_fake)*0.5
-            print("Discriminator B forward done")
-            report_gpu_memory() 
 
-            loss_D_B.backward()
-            torch.cuda.synchronize()
-            optimizer_D_B.step()
-        ###################################
-            print("Discriminator B backward done")
-            report_gpu_memory() 
+        torch.cuda.synchronize()    
+    ###### Discriminator A ######
+        optimizer_D_A.zero_grad()
+
+        # Real loss
+        pred_real = netD_A(real_A)
+        loss_D_real = criterion_GAN(pred_real, target_real)
+
+        # Fake loss
+        fake_A = fake_A_buffer.push_and_pop(fake_A)
+        pred_fake = netD_A(fake_A.detach())
+        loss_D_fake = criterion_GAN(pred_fake, target_fake)
+
+        # Total loss
+        loss_D_A = (loss_D_real + loss_D_fake)*0.5
+        print("Discriminator A forward done")
+        report_gpu_memory() 
+        
+        loss_D_A.backward()
+
+    
+        torch.cuda.synchronize()    
+        optimizer_D_A.step()
+    ###################################
+        print("Discriminator A backward done")
+        report_gpu_memory() 
+    ###### Discriminator B ######
+        torch.cuda.synchronize()    
+        optimizer_D_B.zero_grad()
+
+        # Real loss
+        pred_real = netD_B(real_B)
+        loss_D_real = criterion_GAN(pred_real, target_real)
+        
+        # Fake loss
+        fake_B = fake_B_buffer.push_and_pop(fake_B)
+        pred_fake = netD_B(fake_B.detach())
+        loss_D_fake = criterion_GAN(pred_fake, target_fake)
+
+        # Total loss
+        loss_D_B = (loss_D_real + loss_D_fake)*0.5
+        print("Discriminator B forward done")
+        report_gpu_memory() 
+
+        loss_D_B.backward()
+        torch.cuda.synchronize()
+        optimizer_D_B.step()
+    ###################################
+        print("Discriminator B backward done")
+        report_gpu_memory() 
 
         elapsed_time = time.time() - start_time
         print("Iteration time: " + str(elapsed_time))

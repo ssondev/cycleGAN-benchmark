@@ -90,6 +90,10 @@ class ReplayBuffer():
                     self.data[i] = element
                 else:
                     to_return.append(element)
+        print(to_return[0].device)
+        print(to_return[1].device)
+        print(to_return[2].device)
+        print(to_return[3].device)
         return Variable(torch.cat(to_return))
 
 class LambdaLR():
