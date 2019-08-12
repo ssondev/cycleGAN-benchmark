@@ -107,3 +107,7 @@ output/B/
 
 # model checkpoints
 *.pth
+
+#
+*.nvprof
+*~
